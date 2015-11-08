@@ -1,0 +1,78 @@
+
+<form class="form-horizontal">
+  <button class="col-sm-offset-0 btn btn-default" ng-click="subscribe(1)">
+    Subscribe to sine wave
+  </button>
+  <button class="col-sm-offset-14 btn btn-default" ng-click="unsubscribe(1)">
+    Unsubscribe
+  </button>  
+  <button class="col-sm-offset-28 btn btn-default" ng-click="subscribe(2)">
+    Subscribe to random data
+  </button>
+  <button class="col-sm-offset-32 btn btn-default" ng-click="unsubscribe(2)">
+    Unsubscribe
+  </button>  
+</form>
+<canvas id="canvas1" width="640" height="160"></canvas>
+
+<form class="form-horizontal">  
+<button class="col-sm-offset-0 btn btn-default" ng-click="subscribe(6);subscribe(7)">
+    Subscribe to light&uv
+  </button>
+  <button class="col-sm-offset-14 btn btn-default" ng-click="unsubscribe(6);unsubscribe(7)">
+    Unsubscribe
+  </button>  
+  <button class="col-sm-offset-28 btn btn-default" ng-click="subscribe(8)">
+    Subscribe to moisture
+  </button>
+  <button class="col-sm-offset-32 btn btn-default" ng-click="unsubscribe(8)">
+    Unsubscribe
+  </button>  
+</form>
+<canvas id="canvas2" width="640" height="160"></canvas>
+
+
+<form class="form-horizontal">  
+  <button class="col-sm-offset-0 btn btn-default" ng-click="subscribe(5);">
+    Subscribe to Motion
+  </button>
+  <button class="col-sm-offset-14 btn btn-default" ng-click="unsubscribe(5);">
+    Unsubscribe
+  </button>  
+  <button class="col-sm-offset-28 btn btn-default" ng-click="subscribe(9)">
+    Subscribe to Button
+  </button>
+  <button class="col-sm-offset-32 btn btn-default" ng-click="unsubscribe(9)">
+    Unsubscribe
+  </button>
+  <button class="col-sm-offset-28 btn btn-default" ng-click="subscribe(10)">
+    Subscribe to Rotary Encoder
+  </button>
+  <button class="col-sm-offset-32 btn btn-default" ng-click="unsubscribe(10)">
+    Unsubscribe
+  </button>
+</form>
+<canvas id="canvas3" width="640" height="160"></canvas>
+
+
+<form class="form-horizontal">
+  <button class="col-sm-offset-0 btn btn-default" ng-click="subscribe(3);subscribe(4)">
+    Subscribe to CPU usage
+  </button>
+  <button class="col-sm-offset-14 btn btn-default" ng-click="unsubscribe(3);unsubscribe(4)">
+    Unsubscribe
+  </button>  
+</form>
+<canvas id="canvas4" width="640" height="160"></canvas>
+
+	All the following steps are done on the embedded device with Zulu.
+	<ol>
+	<li>Data generation/capture</li>
+	<li>Publish to the MQTT Broker</li>
+	<li>Subscribe to events with Paho</li>
+	<li>Pronghorn sends events over WebSockets with Netty</li>
+	<li>Netty also hosts the static pages for the AngularJS SPA</li>
+	</ol>
+	<p>
+	Your browser runs the Single Page Application(SPA) and displays the data using smoothie charts.
+	</p>

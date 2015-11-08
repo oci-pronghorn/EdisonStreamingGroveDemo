@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xmlns="http://www.fixprotocol.org/ns/fast/td/1.1">
+    
+   <template name="ProcessCpuLoad" id="10" xmlns="http://www.fixprotocol.org/ns/fast/td/1.1">
+     <uInt32  name="load" id="11"/>
+     <int64 name='time' id="1"/>
+   </template>  
+
+   <template name="SystemCpuLoad" id="20" xmlns="http://www.fixprotocol.org/ns/fast/td/1.1">
+     <uInt32  name="load" id="21"/>
+      <int64 name='time' id="1"/>
+   </template>  
+    
+</templates>

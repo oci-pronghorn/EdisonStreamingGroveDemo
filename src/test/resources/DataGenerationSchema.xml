@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xmlns="http://www.fixprotocol.org/ns/fast/td/1.1">
+    
+   <template name="SineData" id="10" xmlns="http://www.fixprotocol.org/ns/fast/td/1.1">
+   	<uInt32  name="value" id="11"/>
+   </template>  
+
+   <template name="RandomData" id="20" xmlns="http://www.fixprotocol.org/ns/fast/td/1.1">
+     <uInt32  name="value" id="21"/>
+   </template>  
+    
+</templates>

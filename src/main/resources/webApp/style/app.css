@@ -1,0 +1,41 @@
+@page {
+  margin: 0;
+}
+
+body {
+  margin: 0 0.25in;
+}
+
+canvas {
+  margin-left: 5px;
+}
+
+td {
+  padding: 10px;
+  text-align: right;
+}
+
+th {
+  padding: 10px;
+  text-align: right;
+}
+
+table {
+  border-collapse: separate;
+  border-spacing: 10px;
+  margin-left: 5px;
+}
+
+#message-area {
+  height: 300px;
+  width: 500px;
+}
+
+.container {
+  margin-left: 0;
+  width: 680px;
+}
+
+.form-group > div {
+  padding-left: 10px;
+}

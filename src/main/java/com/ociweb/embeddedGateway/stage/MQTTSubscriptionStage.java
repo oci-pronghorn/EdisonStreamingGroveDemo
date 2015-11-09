@@ -1,7 +1,5 @@
 package com.ociweb.embeddedGateway.stage;
 
-import static org.junit.Assert.fail;
-
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.MqttCallback;
 import org.eclipse.paho.client.mqttv3.MqttClient;
@@ -11,7 +9,6 @@ import org.eclipse.paho.client.mqttv3.persist.MemoryPersistence;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.ociweb.pronghorn.pipe.FieldReferenceOffsetManager;
 import com.ociweb.pronghorn.pipe.Pipe;
 import com.ociweb.pronghorn.pipe.RawDataSchema;
 import com.ociweb.pronghorn.stage.PronghornStage;
@@ -23,19 +20,19 @@ public class MQTTSubscriptionStage extends PronghornStage {
     
     private final String host;
     private final String clientName;
-    private final Pipe<RawDataSchema> output;
+    private final Pipe<RawDataSchema>[] output;
     private final int msgSize;
     private MqttClient client;
     private final String topic;
     
-    public MQTTSubscriptionStage(GraphManager graphManager, Pipe<RawDataSchema> output, String topic) {
+    public MQTTSubscriptionStage(GraphManager graphManager, Pipe<RawDataSchema>[] output, String topic) {
         super(graphManager, NONE, output);
         
         this.host = "tcp://localhost:1883";
         this.clientName = "MQTTSubscriptionStage"+this.stageId;
         this.output = output;
         this.topic = topic;
-        this.msgSize = Pipe.from(output).fragDataSize[0];
+        this.msgSize = RawDataSchema .FROM.fragDataSize[0];
     }
     
     @Override
@@ -68,18 +65,20 @@ public class MQTTSubscriptionStage extends PronghornStage {
 
             @Override
             public void messageArrived(String topic, MqttMessage message) throws Exception {
-                                
-                //NOTE: This is bad and blocking but it will do for the demo until the MQTT Client from OCI is completed.
-                while (!Pipe.hasRoomForWrite(output, msgSize)) {
+                            
+                Integer pipeNo = Integer.parseInt(topic.substring(topic.indexOf("/")+1));
+                
+                Pipe<RawDataSchema> pipe = output[pipeNo-1];
+                
+                if (Pipe.hasRoomForWrite(pipe)) {
+                    Pipe.addMsgIdx(pipe, 0);
+                    byte[] payload = message.getPayload();
+                    Pipe.addByteArray(payload, 0, payload.length, pipe);
+                    Pipe.publishWrites(pipe);   
+                    
+                    Pipe.confirmLowLevelWrite(pipe, msgSize);                    
+                    
                 }
-                
-                Pipe.addMsgIdx(output, 0);
-                byte[] payload = message.getPayload();
-                Pipe.addByteArray(payload, 0, payload.length, output);
-                Pipe.publishWrites(output);    
-                
-                Pipe.confirmLowLevelWrite(output, msgSize);
-
             }
 
             @Override
@@ -103,7 +102,7 @@ public class MQTTSubscriptionStage extends PronghornStage {
         } catch (MqttException e) {
             //we want to disconnect so if its already done this is not a problem
             if (!e.getMessage().contains("Client is disconnected")) {
-                fail(e.getMessage());
+                throw new RuntimeException(e);
             }
         }
     }

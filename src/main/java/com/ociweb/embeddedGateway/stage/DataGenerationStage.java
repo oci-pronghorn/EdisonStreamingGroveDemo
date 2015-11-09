@@ -11,7 +11,7 @@ import com.ociweb.pronghorn.stage.scheduling.GraphManager;
 public class DataGenerationStage extends PronghornStage {
 
     private final static int range = Integer.MAX_VALUE-10;
-    private final static double factor = .7d;
+    private final static double factor = 2.5d;
     private long x = 0;
     private final Random rand = new Random(42);
     private final Pipe<DataGeneratorSchema> output;

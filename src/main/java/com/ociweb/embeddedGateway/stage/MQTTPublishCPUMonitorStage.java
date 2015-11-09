@@ -1,7 +1,5 @@
 package com.ociweb.embeddedGateway.stage;
 
-import static org.junit.Assert.fail;
-
 import org.eclipse.paho.client.mqttv3.MqttClient;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttException;
@@ -91,7 +89,7 @@ public class MQTTPublishCPUMonitorStage extends PronghornStage {
         } catch (MqttException e) {
             //we want to disconnect so if its already done this is not a problem
             if (!e.getMessage().contains("Client is disconnected")) {
-                fail(e.getMessage());
+                throw new RuntimeException(e);
             }
         }
     }

@@ -77,6 +77,12 @@ public class EdisonStreamingGroveDemo {
 
             EventLoopGroup eventGroupLoop = new NioEventLoopGroup(1); //this is only needed for netty                    
             GraphManager gm = instance.buildGraph(new GraphManager(), eventGroupLoop, eventGroupLoop);
+            
+            
+            StringBuilder dot = new StringBuilder();
+            GraphManager.writeAsDOT(gm, dot);
+            System.out.println(dot);
+            
             instance.start(gm);
 
             try {
@@ -95,41 +101,29 @@ public class EdisonStreamingGroveDemo {
         //collect the cpu usage and publish it on mqtt
         ///////            
         
-        Pipe<SystemSchema> cpuLoadPipe = new Pipe<SystemSchema>(cpuLoadPipeConfig);            
-        
-        CPUMonitorStage cpuLoadMonitorStage = new CPUMonitorStage(gm, cpuLoadPipe);
+        CPUMonitorStage cpuLoadMonitorStage = new CPUMonitorStage(gm, PipeConfig.pipe(cpuLoadPipeConfig));
         GraphManager.addNota(gm, GraphManager.SCHEDULE_RATE, 500*1000*1000, cpuLoadMonitorStage);
         
-        MQTTPublishCPUMonitorStage cpuLoadPublish = new MQTTPublishCPUMonitorStage(gm, cpuLoadPipe, host, "CPU monitor demo", qos);
+        MQTTPublishCPUMonitorStage cpuLoadPublish = new MQTTPublishCPUMonitorStage(gm, GraphManager.<SystemSchema>getOutputPipe(gm, cpuLoadMonitorStage), host, "CPU monitor demo", qos);
         GraphManager.addNota(gm, GraphManager.SCHEDULE_RATE, 500*1000*1000, cpuLoadPublish);
         
         //////////
         ///generate sine wave and random numbers and publish on mqtt
         ///////////
+        DataGenerationStage dataGenStage = new DataGenerationStage(gm, PipeConfig.pipe(genDataPipeConfig));
+        GraphManager.addNota(gm, GraphManager.SCHEDULE_RATE, 50*1000*1000, dataGenStage);
         
-        Pipe<DataGeneratorSchema> getDataPipe = new Pipe<DataGeneratorSchema>(genDataPipeConfig);     
-        
-        DataGenerationStage dataGenStage = new DataGenerationStage(gm, getDataPipe);
-        GraphManager.addNota(gm, GraphManager.SCHEDULE_RATE, 10*1000*1000, dataGenStage);
-        
-        MQTTPublishGeneratedDataStage genDataPublish = new MQTTPublishGeneratedDataStage(gm, getDataPipe, host, "Gen Data demo", qos );
-        GraphManager.addNota(gm, GraphManager.SCHEDULE_RATE, 40*1000*1000, genDataPublish);
+        MQTTPublishGeneratedDataStage genDataPublish = new MQTTPublishGeneratedDataStage(gm, GraphManager.<DataGeneratorSchema>getOutputPipe(gm, dataGenStage), host, "Gen Data demo", qos );
+        GraphManager.addNota(gm, GraphManager.SCHEDULE_RATE, 100*1000*1000, genDataPublish);
         
         ////////
         //pull data from all the configured sensors and publish on mqtt
         ////////
-        
-        Pipe<GroveResponseSchema> grovePipe = new Pipe<GroveResponseSchema>(groveResponsePipeConfig);     
+                   
         
         GroveConnectionConfiguration config = null;
-        
-        System.out.println("review this on Edison for clue to detect when we are running there.");
-        Set<Entry<Object, Object>> props = System.getProperties().entrySet();
-        for (Entry<Object, Object> e: props) {
-            System.out.println(e.getKey()+" === "+e.getValue());
-        }
-        
-        boolean isOnEdison = false;
+
+        boolean isOnEdison = true;
         
         if (isOnEdison) {
         
@@ -162,12 +156,11 @@ public class EdisonStreamingGroveDemo {
         
         config.coldSetup(); //set initial state so we can configure the Edison soon.
         
-        GroveShieldV2ResponseStage responseStage = new GroveShieldV2ResponseStage(gm, grovePipe, config);
+        GroveShieldV2ResponseStage responseStage = new GroveShieldV2ResponseStage(gm, PipeConfig.pipe(groveResponsePipeConfig), config);
         GraphManager.addNota(gm, GraphManager.SCHEDULE_RATE, 10*1000*1000, responseStage);
         
-        MQTTPublishSensorDataStage sensorPublish = new MQTTPublishSensorDataStage(gm, grovePipe, host, "sensor demo", qos );
+        MQTTPublishSensorDataStage sensorPublish = new MQTTPublishSensorDataStage(gm, GraphManager.<GroveResponseSchema>getOutputPipe(gm, responseStage), host, "sensor demo", qos );
         GraphManager.addNota(gm, GraphManager.SCHEDULE_RATE, 40*1000*1000, sensorPublish);
-        
                 
         ///////     
         //Subscribe to all the MQTT messages and publish them to the browser ove websocket
@@ -191,12 +184,13 @@ public class EdisonStreamingGroveDemo {
             @SuppressWarnings("unchecked")
             Pipe<RawDataSchema>[] toSubscribers = new Pipe[10];
             for (int source=1;source<=10;source++) {                
-                toSubscribers[source-1] = new Pipe<RawDataSchema>(toSubscribersConfig);
-                MQTTSubscriptionStage stage = new MQTTSubscriptionStage(gm, toSubscribers[source-1], "source/"+source);
-                //this stage has its own thread (not normal and to be fixed) and so never needs to be scheduled               
-                GraphManager.addNota(gm, GraphManager.SCHEDULE_RATE, 10*1000*1000*1000, stage);
-                                
+                toSubscribers[source-1] = new Pipe<RawDataSchema>(toSubscribersConfig);                                
             }                        
+
+            MQTTSubscriptionStage subStage = new MQTTSubscriptionStage(gm, toSubscribers, "source/#");
+            //this stage has its own thread (not normal and to be fixed) and so never needs to be scheduled  
+            GraphManager.addNota(gm, GraphManager.SCHEDULE_RATE, 10*1000*1000*1000, subStage);
+
             //this rate must be high to ensure smooth graph
             BrowserSubscriptionStage stage = new BrowserSubscriptionStage(gm, fromBrowserPipes[i], toBrowserPipes[i], toSubscribers);
             GraphManager.addNota(gm, GraphManager.SCHEDULE_RATE, 10*1000*1000, stage);

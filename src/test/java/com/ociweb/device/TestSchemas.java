@@ -12,7 +12,7 @@ public class TestSchemas {
 
     @Test
     public void systemSchemaTest() {
-        assertTrue(FROMValidation.testForMatchingFROMs("/SystemSchema.xml", "FROM", SystemSchema.FROM));
+        assertTrue(FROMValidation.testForMatchingFROMs("/SystemSchema.xml", SystemSchema.instance));
     }
     
     @Test
@@ -22,7 +22,7 @@ public class TestSchemas {
 
     @Test
     public void dataGeneratorSchemaTest() {
-        assertTrue(FROMValidation.testForMatchingFROMs("/DataGenerationSchema.xml", "FROM", DataGeneratorSchema.FROM));
+        assertTrue(FROMValidation.testForMatchingFROMs("/DataGenerationSchema.xml", DataGeneratorSchema.instance));
     }
     
     @Test

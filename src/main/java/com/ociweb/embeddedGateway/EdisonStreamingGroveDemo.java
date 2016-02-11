@@ -1,7 +1,12 @@
 package com.ociweb.embeddedGateway;
 
-import java.util.Map.Entry;
-import java.util.Set;
+import static com.ociweb.device.grove.GroveTwig.Button;
+import static com.ociweb.device.grove.GroveTwig.LightSensor;
+import static com.ociweb.device.grove.GroveTwig.MoistureSensor;
+import static com.ociweb.device.grove.GroveTwig.MotionSensor;
+import static com.ociweb.device.grove.GroveTwig.RotaryEncoder;
+import static com.ociweb.device.grove.GroveTwig.UVSensor;
+
 import java.util.concurrent.TimeUnit;
 
 import org.slf4j.impl.SimpleLogger;
@@ -11,7 +16,6 @@ import com.ociweb.device.config.GroveShieldV2EdisonConfiguration;
 import com.ociweb.device.config.GroveShieldV2MockConfiguration;
 import com.ociweb.device.grove.GroveConnect;
 import com.ociweb.device.grove.GroveShieldV2ResponseStage;
-import static com.ociweb.device.grove.GroveTwig.*;
 import com.ociweb.device.grove.schema.GroveResponseSchema;
 import com.ociweb.embeddedGateway.schema.DataGeneratorSchema;
 import com.ociweb.embeddedGateway.schema.SystemSchema;
@@ -37,10 +41,10 @@ import io.netty.channel.nio.NioEventLoopGroup;
 public class EdisonStreamingGroveDemo {
 
     private static final int longestVariableByteFieldValue = 16;
-    private static final int maxCountOfMessagesOnPipe = 10;
+    private static final int maxCountOfMessagesOnPipe = 100;
     
-    private static final int maxDataGenOnPipe = 50;
-    private static final int maxWebSocketMessagesInFlight = 50;
+    private static final int maxDataGenOnPipe = 100;
+    private static final int maxWebSocketMessagesInFlight = 100;
         
     
     ////////////
@@ -73,7 +77,7 @@ public class EdisonStreamingGroveDemo {
     
     public static void main(String[] args) {
         
-         EdisonStreamingGroveDemo instance = new EdisonStreamingGroveDemo();   
+            EdisonStreamingGroveDemo instance = new EdisonStreamingGroveDemo();   
 
             EventLoopGroup eventGroupLoop = new NioEventLoopGroup(1); //this is only needed for netty                    
             GraphManager gm = instance.buildGraph(new GraphManager(), eventGroupLoop, eventGroupLoop);
@@ -104,7 +108,8 @@ public class EdisonStreamingGroveDemo {
         CPUMonitorStage cpuLoadMonitorStage = new CPUMonitorStage(gm, PipeConfig.pipe(cpuLoadPipeConfig));
         GraphManager.addNota(gm, GraphManager.SCHEDULE_RATE, 500*1000*1000, cpuLoadMonitorStage);
         
-        MQTTPublishCPUMonitorStage cpuLoadPublish = new MQTTPublishCPUMonitorStage(gm, GraphManager.<SystemSchema>getOutputPipe(gm, cpuLoadMonitorStage), host, "CPU monitor demo", qos);
+        MQTTPublishCPUMonitorStage cpuLoadPublish = new MQTTPublishCPUMonitorStage(gm, GraphManager.<SystemSchema>getOutputPipe(gm, cpuLoadMonitorStage),
+                                                                                   host, "CPU monitor demo", qos);
         GraphManager.addNota(gm, GraphManager.SCHEDULE_RATE, 500*1000*1000, cpuLoadPublish);
         
         //////////
@@ -129,7 +134,7 @@ public class EdisonStreamingGroveDemo {
         
             config = new GroveShieldV2EdisonConfiguration(
                     false, //publish time 
-                    false,  //turn on I2C
+                    true,  //turn on I2C
                     new GroveConnect[] {new GroveConnect(RotaryEncoder,2),new GroveConnect(RotaryEncoder,3)}, //rotary encoder 
                     new GroveConnect[] {new GroveConnect(Button,0) ,new GroveConnect(MotionSensor,8)}, //7 should be avoided it can disrupt WiFi, button and motion 
                     new GroveConnect[] {}, //for requests like do the buzzer on 4

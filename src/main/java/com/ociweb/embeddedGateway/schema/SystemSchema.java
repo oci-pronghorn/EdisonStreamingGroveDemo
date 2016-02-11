@@ -13,12 +13,12 @@ public class SystemSchema extends MessageSchema {
             new String[]{"global",null,null,null,"global",null,null,null},
             "SystemSchema.xml");
     
-    public static final int MSG_PROCESSCPULOAD_10 = 0x0;
-    public static final int MSG_PROCESSCPULOAD_10_FIELD_LOAD_11 = 0x1;
-    public static final int MSG_PROCESSCPULOAD_10_FIELD_TIME_1 = 0x3000002;
-    public static final int MSG_SYSTEMCPULOAD_20 = 0x4;
-    public static final int MSG_SYSTEMCPULOAD_20_FIELD_LOAD_21 = 0x1;
-    public static final int MSG_SYSTEMCPULOAD_20_FIELD_TIME_1 = 0x3000002;
+    public static final int MSG_PROCESSCPULOAD_10 = 0x00000000;
+    public static final int MSG_PROCESSCPULOAD_10_FIELD_LOAD_11 = 0x00000001;
+    public static final int MSG_PROCESSCPULOAD_10_FIELD_TIME_1 = 0x00C00002;
+    public static final int MSG_SYSTEMCPULOAD_20 = 0x00000004;
+    public static final int MSG_SYSTEMCPULOAD_20_FIELD_LOAD_21 = 0x00000001;
+    public static final int MSG_SYSTEMCPULOAD_20_FIELD_TIME_1 = 0x00C00002;
     
     public static SystemSchema instance = new SystemSchema();
     

@@ -68,8 +68,9 @@ public class MQTTPublishSensorDataStage extends PronghornStage {
                 switch (value) {
                     case GroveResponseSchema.MSG_BUTTON_50:
                         int newButtonValue =  PipeReader.readInt(pipe, GroveResponseSchema.MSG_BUTTON_50_FIELD_VALUE_52);
-                        publish(client, payload0, qos, retained, 20 * lastButtonValue,"source/9"); //to capture square change on graph must publish previous value.
-                        publish(client, payload1, qos, retained, 20 * newButtonValue,"source/9");
+                        publish(client, payload0, qos, retained, 20 * lastButtonValue, "source/9"); //to capture square change on graph must publish previous value.
+                        publish(client, payload1, qos, retained, 20 * newButtonValue,  "source/9");
+                        System.out.println("zzzzz "+lastButtonValue+"   "+newButtonValue);
                         lastButtonValue = newButtonValue;
                         break;
                     case GroveResponseSchema.MSG_LIGHT_30:

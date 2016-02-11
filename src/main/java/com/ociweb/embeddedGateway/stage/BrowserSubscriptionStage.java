@@ -85,7 +85,7 @@ public class BrowserSubscriptionStage extends PronghornStage {
               
             }
           
-            Pipe.releaseReads(fromNetwork);
+            Pipe.releaseReadLock(fromNetwork);
             
         }        
                
@@ -111,7 +111,7 @@ public class BrowserSubscriptionStage extends PronghornStage {
                     //send payload that will be sent over websocket
                     //[sub id] [ time ] [ time ] [ value]
                                    
-                    byte[] targetBuffer = Pipe.byteBuffer(toNetwork);
+                    byte[] targetBuffer = Pipe.blob(toNetwork);
                     int writePos = Pipe.bytesWorkingHeadPosition(toNetwork);
                     int writePosMask = toNetwork.byteMask;
                     
@@ -152,7 +152,7 @@ public class BrowserSubscriptionStage extends PronghornStage {
                     //dropped data.
                 }
                 
-                Pipe.releaseReads(fromMQTT[j]);
+                Pipe.releaseReadLock(fromMQTT[j]);
                 Pipe.confirmLowLevelRead(fromMQTT[j], msgSizeMQTT);
                             
             }

@@ -74,7 +74,7 @@ public class CPUMonitorStage extends PronghornStage {
     public static double getProcessCpuLoad(String[] attrib) throws ReflectionException, InstanceNotFoundException {
     
         if (null==os) {
-            return Double.NaN;
+            return Double.NaN; ///TODO: URGENT MUST, remove all usage of NaN it prevents optimization of this code.
         }
         
         AttributeList list = mbs.getAttributes(os, attrib);

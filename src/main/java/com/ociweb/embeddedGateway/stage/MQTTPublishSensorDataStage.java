@@ -62,43 +62,67 @@ public class MQTTPublishSensorDataStage extends PronghornStage {
     public void run() {
         try {
             int lastButtonValue = 0;
-            
-            while (PipeReader.tryReadFragment(pipe)) {    
-                int value = PipeReader.getMsgIdx(pipe);
-                switch (value) {
+            Pipe<GroveResponseSchema> localPipe = pipe;
+            while (PipeReader.tryReadFragment(localPipe)) {    
+                switch (PipeReader.getMsgIdx(localPipe)) {
                     case GroveResponseSchema.MSG_BUTTON_50:
-                        int newButtonValue =  PipeReader.readInt(pipe, GroveResponseSchema.MSG_BUTTON_50_FIELD_VALUE_52);
-                        publish(client, payload0, qos, retained, 20 * lastButtonValue, "source/9"); //to capture square change on graph must publish previous value.
-                        publish(client, payload1, qos, retained, 20 * newButtonValue,  "source/9");
-                        System.out.println("zzzzz "+lastButtonValue+"   "+newButtonValue);
-                        lastButtonValue = newButtonValue;
+                        lastButtonValue = fetchButtonValue(lastButtonValue);
                         break;
                     case GroveResponseSchema.MSG_LIGHT_30:
-                        publish(client, payload2, qos, retained, PipeReader.readInt(pipe, GroveResponseSchema.MSG_LIGHT_30_FIELD_VALUE_32),"source/6");
+                        fetchLightValue(localPipe);
                         break;
                     case GroveResponseSchema.MSG_MOISTURE_40:
-                        publish(client, payload3, qos, retained, PipeReader.readInt(pipe, GroveResponseSchema.MSG_MOISTURE_40_FIELD_VALUE_42),"source/8");
+                        fetchMoistureValue(localPipe);
                         break;
                     case GroveResponseSchema.MSG_MOTION_60:
-                        //TODO: may be better with moving average.
-                        publish(client, payload4, qos, retained, 30 * PipeReader.readInt(pipe, GroveResponseSchema.MSG_MOTION_60_FIELD_VALUE_62),"source/5");
+                        fetchMotionValue(localPipe);
                         break;
                     case GroveResponseSchema.MSG_ROTARY_70:
-                        publish(client, payload5, qos, retained,Math.max(0, PipeReader.readInt(pipe, GroveResponseSchema.MSG_ROTARY_70_FIELD_VALUE_72)),"source/10");
+                        fetchRotaryValue(localPipe);
                         break;
                     case GroveResponseSchema.MSG_UV_20:
-                        publish(client, payload6, qos, retained, PipeReader.readInt(pipe, GroveResponseSchema.MSG_UV_20_FIELD_VALUE_22),"source/7");
+                        fetchUVValue(localPipe);
                         break;
                     default:
                         requestShutdown();
                 }
-                PipeReader.releaseReadLock(pipe);
+                PipeReader.releaseReadLock(localPipe);
             }
         } catch (MqttPersistenceException e) {
            throw new RuntimeException(e);
         } catch (MqttException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private void fetchUVValue(Pipe<GroveResponseSchema> localPipe) throws MqttException, MqttPersistenceException {
+        publish(client, payload6, qos, retained, PipeReader.readInt(localPipe, GroveResponseSchema.MSG_UV_20_FIELD_VALUE_22),"source/7");
+    }
+
+    private void fetchRotaryValue(Pipe<GroveResponseSchema> localPipe) throws MqttException, MqttPersistenceException {
+        publish(client, payload5, qos, retained,Math.max(0, PipeReader.readInt(localPipe, GroveResponseSchema.MSG_ROTARY_70_FIELD_VALUE_72)),"source/10");
+    }
+
+    private void fetchMotionValue(Pipe<GroveResponseSchema> localPipe) throws MqttException, MqttPersistenceException {
+        //TODO: may be better with moving average.
+        publish(client, payload4, qos, retained, 30 * PipeReader.readInt(localPipe, GroveResponseSchema.MSG_MOTION_60_FIELD_VALUE_62),"source/5");
+    }
+
+    private void fetchMoistureValue(Pipe<GroveResponseSchema> localPipe)
+            throws MqttException, MqttPersistenceException {
+        publish(client, payload3, qos, retained, PipeReader.readInt(localPipe, GroveResponseSchema.MSG_MOISTURE_40_FIELD_VALUE_42),"source/8");
+    }
+
+    private void fetchLightValue(Pipe<GroveResponseSchema> localPipe) throws MqttException, MqttPersistenceException {
+        publish(client, payload2, qos, retained, PipeReader.readInt(localPipe, GroveResponseSchema.MSG_LIGHT_30_FIELD_VALUE_32),"source/6");
+    }
+
+    private int fetchButtonValue(int lastButtonValue) throws MqttException, MqttPersistenceException {
+        int newButtonValue =  PipeReader.readInt(pipe, GroveResponseSchema.MSG_BUTTON_50_FIELD_VALUE_52);
+        publish(client, payload0, qos, retained, 20 * lastButtonValue, "source/9"); //to capture square change on graph must publish previous value.
+        publish(client, payload1, qos, retained, 20 * newButtonValue,  "source/9");
+        lastButtonValue = newButtonValue;
+        return lastButtonValue;
     }
     
     public void publish(MqttClient client, byte[] payload, int qos, boolean retained, int value, String topic)

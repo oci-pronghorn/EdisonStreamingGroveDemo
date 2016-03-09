@@ -15,13 +15,16 @@ import com.ociweb.device.config.GroveConnectionConfiguration;
 import com.ociweb.device.config.GroveShieldV2EdisonConfiguration;
 import com.ociweb.device.config.GroveShieldV2MockConfiguration;
 import com.ociweb.device.grove.GroveConnect;
+import com.ociweb.device.grove.GroveShieldV2I2CStage;
 import com.ociweb.device.grove.GroveShieldV2ResponseStage;
 import com.ociweb.device.grove.schema.GroveResponseSchema;
+import com.ociweb.device.grove.schema.I2CCommandSchema;
 import com.ociweb.embeddedGateway.schema.DataGeneratorSchema;
 import com.ociweb.embeddedGateway.schema.SystemSchema;
 import com.ociweb.embeddedGateway.stage.BrowserSubscriptionStage;
 import com.ociweb.embeddedGateway.stage.CPUMonitorStage;
 import com.ociweb.embeddedGateway.stage.DataGenerationStage;
+import com.ociweb.embeddedGateway.stage.I2CCommandStage;
 import com.ociweb.embeddedGateway.stage.MQTTPublishCPUMonitorStage;
 import com.ociweb.embeddedGateway.stage.MQTTPublishGeneratedDataStage;
 import com.ociweb.embeddedGateway.stage.MQTTPublishSensorDataStage;
@@ -106,11 +109,11 @@ public class EdisonStreamingGroveDemo {
         ///////            
         
         CPUMonitorStage cpuLoadMonitorStage = new CPUMonitorStage(gm, PipeConfig.pipe(cpuLoadPipeConfig));
-        GraphManager.addNota(gm, GraphManager.SCHEDULE_RATE, 500*1000*1000, cpuLoadMonitorStage);
+        GraphManager.addNota(gm, GraphManager.SCHEDULE_RATE, 100*1000*1000, cpuLoadMonitorStage);
         
         MQTTPublishCPUMonitorStage cpuLoadPublish = new MQTTPublishCPUMonitorStage(gm, GraphManager.<SystemSchema>getOutputPipe(gm, cpuLoadMonitorStage),
                                                                                    host, "CPU monitor demo", qos);
-        GraphManager.addNota(gm, GraphManager.SCHEDULE_RATE, 500*1000*1000, cpuLoadPublish);
+        GraphManager.addNota(gm, GraphManager.SCHEDULE_RATE, 200*1000*1000, cpuLoadPublish);
         
         //////////
         ///generate sine wave and random numbers and publish on mqtt
@@ -143,6 +146,9 @@ public class EdisonStreamingGroveDemo {
                                         new GroveConnect(LightSensor,2), 
                                         new GroveConnect(UVSensor,3)
                                   }); //for analog sensors A0, A1, A2, A3
+            
+             setupRGBLCD(gm, config);   
+            
         } else {
            System.out.println("Not on edison hardware so mock data sensors will be used.");
           //Fake configuration to mock behavior of hardware.
@@ -162,10 +168,10 @@ public class EdisonStreamingGroveDemo {
         config.coldSetup(); //set initial state so we can configure the Edison soon.
         
         GroveShieldV2ResponseStage responseStage = new GroveShieldV2ResponseStage(gm, PipeConfig.pipe(groveResponsePipeConfig), config);
-        GraphManager.addNota(gm, GraphManager.SCHEDULE_RATE, 10*1000*1000, responseStage);
+        GraphManager.addNota(gm, GraphManager.SCHEDULE_RATE, 5*1000*1000, responseStage);
         
         MQTTPublishSensorDataStage sensorPublish = new MQTTPublishSensorDataStage(gm, GraphManager.<GroveResponseSchema>getOutputPipe(gm, responseStage), host, "sensor demo", qos );
-        GraphManager.addNota(gm, GraphManager.SCHEDULE_RATE, 40*1000*1000, sensorPublish);
+        GraphManager.addNota(gm, GraphManager.SCHEDULE_RATE, 10*1000*1000, sensorPublish);
                 
         ///////     
         //Subscribe to all the MQTT messages and publish them to the browser ove websocket
@@ -181,7 +187,7 @@ public class EdisonStreamingGroveDemo {
         
         WebSocketServerPronghornStage serverStage = new WebSocketServerPronghornStage(gm, toBrowserPipes, fromBrowserPipes, bossGroup, workerGroup); 
         //this stage has its own thread (not normal and to be fixed) and so never needs to be scheduled      
-        GraphManager.addNota(gm, GraphManager.SCHEDULE_RATE,  10*1000*1000*1000, serverStage);
+        GraphManager.addNota(gm, GraphManager.UNSCHEDULED,  GraphManager.UNSCHEDULED, serverStage);
         
         int i = toBrowserPipes.length;
         while (--i>=0) {
@@ -194,7 +200,7 @@ public class EdisonStreamingGroveDemo {
 
             MQTTSubscriptionStage subStage = new MQTTSubscriptionStage(gm, toSubscribers, "source/#");
             //this stage has its own thread (not normal and to be fixed) and so never needs to be scheduled  
-            GraphManager.addNota(gm, GraphManager.SCHEDULE_RATE, 10*1000*1000*1000, subStage);
+            GraphManager.addNota(gm, GraphManager.UNSCHEDULED, GraphManager.UNSCHEDULED, subStage);
 
             //this rate must be high to ensure smooth graph
             BrowserSubscriptionStage stage = new BrowserSubscriptionStage(gm, fromBrowserPipes[i], toBrowserPipes[i], toSubscribers);
@@ -204,7 +210,24 @@ public class EdisonStreamingGroveDemo {
         
         return gm;
     }
-    
+     
+    private void setupRGBLCD(GraphManager gm, GroveConnectionConfiguration config) {
+        PipeConfig<I2CCommandSchema> requestI2CConfig = new PipeConfig<I2CCommandSchema>(I2CCommandSchema.instance, 64, 256);
+
+        
+        Pipe<I2CCommandSchema> i2cToBusPipe = new Pipe<I2CCommandSchema>(requestI2CConfig);
+        
+        I2CCommandStage comStage = new I2CCommandStage(gm,i2cToBusPipe); //TODO: old test code delete and the class soon.
+        
+        Pipe[] requests = new Pipe[]{i2cToBusPipe};
+        Pipe[] response = new Pipe[0];
+        
+        new GroveShieldV2I2CStage(gm, requests, response, config);
+        
+    }
+
+
+   
 
     public void start(GraphManager gm) {
         

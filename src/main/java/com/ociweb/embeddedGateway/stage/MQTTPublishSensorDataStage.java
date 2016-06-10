@@ -63,29 +63,53 @@ public class MQTTPublishSensorDataStage extends PronghornStage {
         try {
             int lastButtonValue = 0;
             Pipe<GroveResponseSchema> localPipe = pipe;
-            while (PipeReader.tryReadFragment(localPipe)) {    
-                switch (PipeReader.getMsgIdx(localPipe)) {
-                    case GroveResponseSchema.MSG_BUTTON_50:
-                        lastButtonValue = fetchButtonValue(lastButtonValue);
+            while (PipeReader.tryReadFragment(localPipe)) {   
+                
+                int msg = PipeReader.getMsgIdx(localPipe);
+                
+                switch (msg) {
+                    case GroveResponseSchema.MSG_ANALOGSAMPLE_30:
+                       
+                        
+                        int connectorA = PipeReader.readInt(localPipe, GroveResponseSchema.MSG_ANALOGSAMPLE_30_FIELD_CONNECTOR_31);
+                        switch(connectorA) { //TODO: this is a HACK and should be doen with external configuration
+                                case 1:
+                                    fetchMoistureValue(localPipe);
+                                    break;
+                                case 2:
+                                    fetchLightValue(localPipe);
+                                    break;
+                                case 3:
+                                    fetchUVValue(localPipe);
+                                    break;
+                        }
+                        
+                        
                         break;
-                    case GroveResponseSchema.MSG_LIGHT_30:
-                        fetchLightValue(localPipe);
+                        
+                    case GroveResponseSchema.MSG_DIGITALSAMPLE_20:
+                        
+                        int connectorD = PipeReader.readInt(localPipe, GroveResponseSchema.MSG_DIGITALSAMPLE_20_FIELD_CONNECTOR_21);
+                        switch(connectorD) {  //TODO: this is a HACK and should be doen with external configuration
+                            case 0:
+                                lastButtonValue = fetchButtonValue(lastButtonValue);
+                            break;
+                            case 8:
+                                fetchMotionValue(localPipe);
+                            break;                                
+                        }
+                        
+                        
                         break;
-                    case GroveResponseSchema.MSG_MOISTURE_40:
-                        fetchMoistureValue(localPipe);
-                        break;
-                    case GroveResponseSchema.MSG_MOTION_60:
-                        fetchMotionValue(localPipe);
-                        break;
-                    case GroveResponseSchema.MSG_ROTARY_70:
+                    case GroveResponseSchema.MSG_ENCODER_70:
                         fetchRotaryValue(localPipe);
-                        break;
-                    case GroveResponseSchema.MSG_UV_20:
-                        fetchUVValue(localPipe);
                         break;
                     default:
                         requestShutdown();
+                
                 }
+                
+                
                 PipeReader.releaseReadLock(localPipe);
             }
         } catch (MqttPersistenceException e) {
@@ -96,29 +120,29 @@ public class MQTTPublishSensorDataStage extends PronghornStage {
     }
 
     private void fetchUVValue(Pipe<GroveResponseSchema> localPipe) throws MqttException, MqttPersistenceException {
-        publish(client, payload6, qos, retained, PipeReader.readInt(localPipe, GroveResponseSchema.MSG_UV_20_FIELD_VALUE_22),"source/7");
+        publish(client, payload6, qos, retained, PipeReader.readInt(localPipe, GroveResponseSchema.MSG_ANALOGSAMPLE_30_FIELD_VALUE_32),"source/7");
     }
 
     private void fetchRotaryValue(Pipe<GroveResponseSchema> localPipe) throws MqttException, MqttPersistenceException {
-        publish(client, payload5, qos, retained,Math.max(0, PipeReader.readInt(localPipe, GroveResponseSchema.MSG_ROTARY_70_FIELD_VALUE_72)),"source/10");
+        publish(client, payload5, qos, retained,Math.max(0, PipeReader.readInt(localPipe, GroveResponseSchema.MSG_ENCODER_70_FIELD_VALUE_72)),"source/10");
     }
 
     private void fetchMotionValue(Pipe<GroveResponseSchema> localPipe) throws MqttException, MqttPersistenceException {
         //TODO: may be better with moving average.
-        publish(client, payload4, qos, retained, 30 * PipeReader.readInt(localPipe, GroveResponseSchema.MSG_MOTION_60_FIELD_VALUE_62),"source/5");
+        publish(client, payload4, qos, retained, 30 * PipeReader.readInt(localPipe, GroveResponseSchema.MSG_DIGITALSAMPLE_20_FIELD_VALUE_22),"source/5");
     }
 
     private void fetchMoistureValue(Pipe<GroveResponseSchema> localPipe)
             throws MqttException, MqttPersistenceException {
-        publish(client, payload3, qos, retained, PipeReader.readInt(localPipe, GroveResponseSchema.MSG_MOISTURE_40_FIELD_VALUE_42),"source/8");
+        publish(client, payload3, qos, retained, PipeReader.readInt(localPipe, GroveResponseSchema.MSG_ANALOGSAMPLE_30_FIELD_VALUE_32),"source/8");
     }
 
     private void fetchLightValue(Pipe<GroveResponseSchema> localPipe) throws MqttException, MqttPersistenceException {
-        publish(client, payload2, qos, retained, PipeReader.readInt(localPipe, GroveResponseSchema.MSG_LIGHT_30_FIELD_VALUE_32),"source/6");
+        publish(client, payload2, qos, retained, PipeReader.readInt(localPipe, GroveResponseSchema.MSG_ANALOGSAMPLE_30_FIELD_VALUE_32),"source/6");
     }
 
     private int fetchButtonValue(int lastButtonValue) throws MqttException, MqttPersistenceException {
-        int newButtonValue =  PipeReader.readInt(pipe, GroveResponseSchema.MSG_BUTTON_50_FIELD_VALUE_52);
+        int newButtonValue =  PipeReader.readInt(pipe, GroveResponseSchema.MSG_DIGITALSAMPLE_20_FIELD_VALUE_22);
         publish(client, payload0, qos, retained, 20 * lastButtonValue, "source/9"); //to capture square change on graph must publish previous value.
         publish(client, payload1, qos, retained, 20 * newButtonValue,  "source/9");
         lastButtonValue = newButtonValue;

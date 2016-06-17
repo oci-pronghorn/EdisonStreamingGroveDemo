@@ -112,7 +112,7 @@ public class BrowserSubscriptionStage extends PronghornStage {
                     //[sub id] [ time ] [ time ] [ value]
                                    
                     byte[] targetBuffer = Pipe.blob(toNetwork);
-                    int writePos = Pipe.bytesWorkingHeadPosition(toNetwork);
+                    int writePos = Pipe.getBlobWorkingHeadPosition(toNetwork);
                     int writePosMask = toNetwork.byteMask;
                     
                     Pipe.addBytePosAndLen(toNetwork, writePos, 16);

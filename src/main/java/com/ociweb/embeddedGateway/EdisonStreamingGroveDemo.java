@@ -1,24 +1,9 @@
 package com.ociweb.embeddedGateway;
 
-import static com.ociweb.device.grove.GroveTwig.Button;
-import static com.ociweb.device.grove.GroveTwig.LightSensor;
-import static com.ociweb.device.grove.GroveTwig.MoistureSensor;
-import static com.ociweb.device.grove.GroveTwig.MotionSensor;
-import static com.ociweb.device.grove.GroveTwig.RotaryEncoder;
-import static com.ociweb.device.grove.GroveTwig.UVSensor;
-
 import java.util.concurrent.TimeUnit;
 
 import org.slf4j.impl.SimpleLogger;
 
-import com.ociweb.device.config.GroveConnectionConfiguration;
-import com.ociweb.device.config.GroveShieldV2EdisonConfiguration;
-import com.ociweb.device.config.GroveShieldV2MockConfiguration;
-import com.ociweb.device.grove.GroveConnect;
-import com.ociweb.device.grove.GroveShieldV2I2CStage;
-import com.ociweb.device.grove.GroveShieldV2ResponseStage;
-import com.ociweb.device.grove.schema.GroveResponseSchema;
-import com.ociweb.device.grove.schema.I2CCommandSchema;
 import com.ociweb.embeddedGateway.schema.DataGeneratorSchema;
 import com.ociweb.embeddedGateway.schema.SystemSchema;
 import com.ociweb.embeddedGateway.stage.BrowserSubscriptionStage;
@@ -29,8 +14,17 @@ import com.ociweb.embeddedGateway.stage.MQTTPublishCPUMonitorStage;
 import com.ociweb.embeddedGateway.stage.MQTTPublishGeneratedDataStage;
 import com.ociweb.embeddedGateway.stage.MQTTPublishSensorDataStage;
 import com.ociweb.embeddedGateway.stage.MQTTSubscriptionStage;
+import com.ociweb.iot.grove.GroveShieldV2I2CStage;
+import com.ociweb.iot.hardware.GroveShieldV2EdisonImpl;
+import com.ociweb.iot.hardware.GroveShieldV2MockImpl;
+import com.ociweb.iot.hardware.HardConnection;
+import com.ociweb.iot.hardware.Hardware;
+import com.ociweb.iot.schema.GroveResponseSchema;
+import com.ociweb.iot.schema.I2CCommandSchema;
 import com.ociweb.pronghorn.adapter.netty.WebSocketSchema;
 import com.ociweb.pronghorn.adapter.netty.WebSocketServerPronghornStage;
+import com.ociweb.pronghorn.iot.ReadDeviceInputStage;
+import static com.ociweb.iot.grove.GroveTwig.*;
 import com.ociweb.pronghorn.pipe.Pipe;
 import com.ociweb.pronghorn.pipe.PipeConfig;
 import com.ociweb.pronghorn.pipe.RawDataSchema;
@@ -129,22 +123,22 @@ public class EdisonStreamingGroveDemo {
         ////////
                    
         
-        GroveConnectionConfiguration config = null;
+        Hardware config = null;
 
         boolean isOnEdison = true;
         
         if (isOnEdison) {
         
-            config = new GroveShieldV2EdisonConfiguration(
+            config = new GroveShieldV2EdisonImpl(
                     false, //publish time 
                     true,  //turn on I2C
-                    new GroveConnect[] {new GroveConnect(RotaryEncoder,2),new GroveConnect(RotaryEncoder,3)}, //rotary encoder 
-                    new GroveConnect[] {new GroveConnect(Button,0) ,new GroveConnect(MotionSensor,8)}, //7 should be avoided it can disrupt WiFi, button and motion 
-                    new GroveConnect[] {}, //for requests like do the buzzer on 4
-                    new GroveConnect[]{},  //for PWM requests //(only 3, 5, 6, 9, 10, 11) //3 here is D3
-                    new GroveConnect[] {new GroveConnect(MoistureSensor,1), //1 here is A1
-                                        new GroveConnect(LightSensor,2), 
-                                        new GroveConnect(UVSensor,3)
+                    new HardConnection[] {new HardConnection(RotaryEncoder,2),new HardConnection(RotaryEncoder,3)}, //rotary encoder 
+                    new HardConnection[] {new HardConnection(Button,0) ,new HardConnection(MotionSensor,8)}, //7 should be avoided it can disrupt WiFi, button and motion 
+                    new HardConnection[] {}, //for requests like do the buzzer on 4
+                    new HardConnection[]{},  //for PWM requests //(only 3, 5, 6, 9, 10, 11) //3 here is D3
+                    new HardConnection[] {new HardConnection(MoistureSensor,1), //1 here is A1
+                                        new HardConnection(LightSensor,2), 
+                                        new HardConnection(UVSensor,3)
                                   }); //for analog sensors A0, A1, A2, A3
             
              setupRGBLCD(gm, config);   
@@ -152,22 +146,22 @@ public class EdisonStreamingGroveDemo {
         } else {
            System.out.println("Not on edison hardware so mock data sensors will be used.");
           //Fake configuration to mock behavior of hardware.
-           config = new GroveShieldV2MockConfiguration(
+           config = new GroveShieldV2MockImpl(
                   false, //publish time 
                   false,  //turn on I2C
-                  new GroveConnect[] {new GroveConnect(RotaryEncoder,2),new GroveConnect(RotaryEncoder,3)}, //rotary encoder 
-                  new GroveConnect[] {new GroveConnect(Button,0) ,new GroveConnect(MotionSensor,8)}, //7 should be avoided it can disrupt WiFi, button and motion 
-                  new GroveConnect[] {}, //for requests like do the buzzer on 4
-                  new GroveConnect[]{},  //for PWM requests //(only 3, 5, 6, 9, 10, 11) //3 here is D3
-                  new GroveConnect[] {new GroveConnect(MoistureSensor,1), //1 here is A1
-                                 new GroveConnect(LightSensor,2), 
-                                 new GroveConnect(UVSensor,3)
+                  new HardConnection[] {new HardConnection(RotaryEncoder,2),new HardConnection(RotaryEncoder,3)}, //rotary encoder 
+                  new HardConnection[] {new HardConnection(Button,0) ,new HardConnection(MotionSensor,8)}, //7 should be avoided it can disrupt WiFi, button and motion 
+                  new HardConnection[] {}, //for requests like do the buzzer on 4
+                  new HardConnection[]{},  //for PWM requests //(only 3, 5, 6, 9, 10, 11) //3 here is D3
+                  new HardConnection[] {new HardConnection(MoistureSensor,1), //1 here is A1
+                                 new HardConnection(LightSensor,2), 
+                                 new HardConnection(UVSensor,3)
                                 }); //for analog sensors A0, A1, A2, A3
         }
         
         config.coldSetup(); //set initial state so we can configure the Edison soon.
         
-        GroveShieldV2ResponseStage responseStage = new GroveShieldV2ResponseStage(gm, PipeConfig.pipe(groveResponsePipeConfig), config);
+        ReadDeviceInputStage responseStage = new ReadDeviceInputStage(gm, PipeConfig.pipe(groveResponsePipeConfig), config);
         GraphManager.addNota(gm, GraphManager.SCHEDULE_RATE, 5*1000*1000, responseStage);
         
         MQTTPublishSensorDataStage sensorPublish = new MQTTPublishSensorDataStage(gm, GraphManager.<GroveResponseSchema>getOutputPipe(gm, responseStage), host, "sensor demo", qos );
@@ -211,7 +205,7 @@ public class EdisonStreamingGroveDemo {
         return gm;
     }
      
-    private void setupRGBLCD(GraphManager gm, GroveConnectionConfiguration config) {
+    private void setupRGBLCD(GraphManager gm, Hardware config) {
         PipeConfig<I2CCommandSchema> requestI2CConfig = new PipeConfig<I2CCommandSchema>(I2CCommandSchema.instance, 64, 256);
 
         

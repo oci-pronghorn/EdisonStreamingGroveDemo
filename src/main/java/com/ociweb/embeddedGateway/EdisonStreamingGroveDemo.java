@@ -135,34 +135,15 @@ public class EdisonStreamingGroveDemo {
         
         if (isOnEdison) {
         
-            config = new GroveShieldV2EdisonImpl(
-                    false, //publish time 
-                    true,  //turn on I2C
-                    new HardConnection[] {new HardConnection(RotaryEncoder,2),new HardConnection(RotaryEncoder,3)}, //rotary encoder 
-                    new HardConnection[] {new HardConnection(Button,0) ,new HardConnection(MotionSensor,8)}, //7 should be avoided it can disrupt WiFi, button and motion 
-                    new HardConnection[] {}, //for requests like do the buzzer on 4
-                    new HardConnection[]{},  //for PWM requests //(only 3, 5, 6, 9, 10, 11) //3 here is D3
-                    new HardConnection[] {new HardConnection(MoistureSensor,1), //1 here is A1
-                                        new HardConnection(LightSensor,2), 
-                                        new HardConnection(UVSensor,3)
-                                  }); //for analog sensors A0, A1, A2, A3
-            
+             config = new GroveShieldV2EdisonImpl().useI2C().useConnectDs(RotaryEncoder,2,3).useConnectD(Button, 0).useConnectD(MotionSensor,8).useConnectA(MoistureSensor,1).useConnectA(LightSensor, 2).useConnectA(UVSensor,3);
+                   
              setupRGBLCD(gm, config);   
             
         } else {
            System.out.println("Not on edison hardware so mock data sensors will be used.");
           //Fake configuration to mock behavior of hardware.
-           config = new GroveShieldV2MockImpl(
-                  false, //publish time 
-                  false,  //turn on I2C
-                  new HardConnection[] {new HardConnection(RotaryEncoder,2),new HardConnection(RotaryEncoder,3)}, //rotary encoder 
-                  new HardConnection[] {new HardConnection(Button,0) ,new HardConnection(MotionSensor,8)}, //7 should be avoided it can disrupt WiFi, button and motion 
-                  new HardConnection[] {}, //for requests like do the buzzer on 4
-                  new HardConnection[]{},  //for PWM requests //(only 3, 5, 6, 9, 10, 11) //3 here is D3
-                  new HardConnection[] {new HardConnection(MoistureSensor,1), //1 here is A1
-                                 new HardConnection(LightSensor,2), 
-                                 new HardConnection(UVSensor,3)
-                                }); //for analog sensors A0, A1, A2, A3
+           config = new GroveShieldV2EdisonImpl().useConnectDs(RotaryEncoder,2,3).useConnectD(Button, 0).useConnectD(MotionSensor,8).useConnectA(MoistureSensor,1).useConnectA(LightSensor, 2).useConnectA(UVSensor,3);
+           
         }
         
         config.coldSetup(); //set initial state so we can configure the Edison soon.

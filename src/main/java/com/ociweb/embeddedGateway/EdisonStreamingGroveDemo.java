@@ -1,5 +1,12 @@
 package com.ociweb.embeddedGateway;
 
+import static com.ociweb.iot.grove.GroveTwig.Button;
+import static com.ociweb.iot.grove.GroveTwig.LightSensor;
+import static com.ociweb.iot.grove.GroveTwig.MoistureSensor;
+import static com.ociweb.iot.grove.GroveTwig.MotionSensor;
+import static com.ociweb.iot.grove.GroveTwig.RotaryEncoder;
+import static com.ociweb.iot.grove.GroveTwig.UVSensor;
+
 import java.util.concurrent.TimeUnit;
 
 import org.slf4j.impl.SimpleLogger;
@@ -14,17 +21,16 @@ import com.ociweb.embeddedGateway.stage.MQTTPublishCPUMonitorStage;
 import com.ociweb.embeddedGateway.stage.MQTTPublishGeneratedDataStage;
 import com.ociweb.embeddedGateway.stage.MQTTPublishSensorDataStage;
 import com.ociweb.embeddedGateway.stage.MQTTSubscriptionStage;
-import com.ociweb.iot.grove.GroveShieldV2I2CStage;
 import com.ociweb.iot.hardware.GroveShieldV2EdisonImpl;
 import com.ociweb.iot.hardware.GroveShieldV2MockImpl;
 import com.ociweb.iot.hardware.HardConnection;
 import com.ociweb.iot.hardware.Hardware;
-import com.ociweb.iot.schema.GroveResponseSchema;
-import com.ociweb.iot.schema.I2CCommandSchema;
 import com.ociweb.pronghorn.adapter.netty.WebSocketSchema;
 import com.ociweb.pronghorn.adapter.netty.WebSocketServerPronghornStage;
 import com.ociweb.pronghorn.iot.ReadDeviceInputStage;
-import static com.ociweb.iot.grove.GroveTwig.*;
+import com.ociweb.pronghorn.iot.i2c.PureJavaI2CStage;
+import com.ociweb.pronghorn.iot.schema.GroveResponseSchema;
+import com.ociweb.pronghorn.iot.schema.I2CCommandSchema;
 import com.ociweb.pronghorn.pipe.Pipe;
 import com.ociweb.pronghorn.pipe.PipeConfig;
 import com.ociweb.pronghorn.pipe.RawDataSchema;
@@ -216,7 +222,7 @@ public class EdisonStreamingGroveDemo {
         Pipe[] requests = new Pipe[]{i2cToBusPipe};
         Pipe[] response = new Pipe[0];
         
-        new GroveShieldV2I2CStage(gm, requests, response, config);
+        new PureJavaI2CStage(gm, requests, response, config);
         
     }
 

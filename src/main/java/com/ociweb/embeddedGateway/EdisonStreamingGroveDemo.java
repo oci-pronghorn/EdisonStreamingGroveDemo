@@ -21,9 +21,7 @@ import com.ociweb.embeddedGateway.stage.MQTTPublishCPUMonitorStage;
 import com.ociweb.embeddedGateway.stage.MQTTPublishGeneratedDataStage;
 import com.ociweb.embeddedGateway.stage.MQTTPublishSensorDataStage;
 import com.ociweb.embeddedGateway.stage.MQTTSubscriptionStage;
-import com.ociweb.iot.hardware.GroveShieldV2EdisonImpl;
-import com.ociweb.iot.hardware.GroveShieldV2MockImpl;
-import com.ociweb.iot.hardware.HardConnection;
+import com.ociweb.iot.hardware.GroveV3EdisonImpl;
 import com.ociweb.iot.hardware.Hardware;
 import com.ociweb.pronghorn.adapter.netty.WebSocketSchema;
 import com.ociweb.pronghorn.adapter.netty.WebSocketServerPronghornStage;
@@ -135,14 +133,14 @@ public class EdisonStreamingGroveDemo {
         
         if (isOnEdison) {
         
-             config = new GroveShieldV2EdisonImpl().useI2C().useConnectDs(RotaryEncoder,2,3).useConnectD(Button, 0).useConnectD(MotionSensor,8).useConnectA(MoistureSensor,1).useConnectA(LightSensor, 2).useConnectA(UVSensor,3);
+             config = new GroveV3EdisonImpl(gm).useI2C().useConnectDs(RotaryEncoder,2,3).useConnectD(Button, 0).useConnectD(MotionSensor,8).useConnectA(MoistureSensor,1).useConnectA(LightSensor, 2).useConnectA(UVSensor,3);
                    
              setupRGBLCD(gm, config);   
             
         } else {
            System.out.println("Not on edison hardware so mock data sensors will be used.");
           //Fake configuration to mock behavior of hardware.
-           config = new GroveShieldV2EdisonImpl().useConnectDs(RotaryEncoder,2,3).useConnectD(Button, 0).useConnectD(MotionSensor,8).useConnectA(MoistureSensor,1).useConnectA(LightSensor, 2).useConnectA(UVSensor,3);
+           config = new GroveV3EdisonImpl(gm).useConnectDs(RotaryEncoder,2,3).useConnectD(Button, 0).useConnectD(MotionSensor,8).useConnectA(MoistureSensor,1).useConnectA(LightSensor, 2).useConnectA(UVSensor,3);
            
         }
         
@@ -203,7 +201,7 @@ public class EdisonStreamingGroveDemo {
         Pipe[] requests = new Pipe[]{i2cToBusPipe};
         Pipe[] response = new Pipe[0];
         
-        new PureJavaI2CStage(gm, requests, response, config);
+        new PureJavaI2CStage(gm, requests, response);
         
     }
 

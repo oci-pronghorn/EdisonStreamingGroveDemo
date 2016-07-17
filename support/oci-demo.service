@@ -1,0 +1,12 @@
+[Unit]
+Description=oci-demo
+After=network.target
+
+[Service]
+ExecStart=/home/root/demo/launch-oci-demo.sh
+Restart=always
+RestartSec=10s
+
+[Install]
+WantedBy=multi-user.target
+

@@ -1,0 +1,20 @@
+/etc/systemd/journald.conf
+
+ensure
+SystemMaxFileSize = 200K
+
+
+copy the following:
+
+scp oci-demo.service root@192.168.2.15:/lib/systemd/system
+scp launch-oci-demo.sh root@192.168.2.15:/home/root/demo
+
+
+systemctl enable oci-demo
+
+//other commands
+systemctl restart oci-demo
+
+journalctl -f /home/root/demo/launch-oci-demo.sh
+
+
